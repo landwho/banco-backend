@@ -1,0 +1,213 @@
+create database CHN;
+use CHN;
+
+CREATE TABLE USUARIO(
+USUARIO_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+NOMBRES VARCHAR(50),
+APELLIDOS VARCHAR(50),
+GENERO VARCHAR(10),
+FECHA_NAC VARCHAR(10),
+DIRECCION VARCHAR(50),
+CORREO VARCHAR(50),
+TELEFONO VARCHAR(50),
+CLAVE VARCHAR(255)
+);
+
+-- Insertar un usuario
+INSERT INTO USUARIO (NOMBRES, APELLIDOS, GENERO, FECHA_NAC, DIRECCION, CORREO, TELEFONO, CLAVE) 
+VALUES ('JORGE', 'UBICO', 'Masculino', '1989-01-25', 'Avenida Reforma 123', 'UBICOB@mail.com', '5551234', '123');
+
+CREATE TABLE TIPO_CUENTA(
+	TIPO_CUENTA_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	TIPO_CUENTA VARCHAR(50),
+    TIPO_CUENTA_DESCRIPCION VARCHAR(255)
+);
+INSERT INTO TIPO_CUENTA (TIPO_CUENTA, TIPO_CUENTA_DESCRIPCION) VALUES
+('Cuenta Corriente', 'Cuenta bancaria utilizada para realizar pagos frecuentes, emitir cheques y manejar el dinero del día a día. Permite transacciones rápidas y acceso ilimitado a los fondos.'),
+('Cuenta de Ahorro', 'Cuenta destinada al ahorro personal con una rentabilidad sobre el saldo disponible. Ideal para acumular fondos con un interés compuesto, generalmente sin restricciones de acceso.'),
+('Cuenta de Ahorro a Plazo Fijo', 'Cuenta de ahorro con un depósito que se mantiene durante un período determinado, y ofrece una tasa de interés superior a la de las cuentas de ahorro comunes. El saldo no se puede retirar antes de la fecha de vencimiento sin penalizaciones.'),
+('Cuenta de Inversión', 'Cuenta que ofrece productos de inversión como fondos mutuos, depósitos a plazo fijo y otros instrumentos financieros. Permite generar rendimientos a largo plazo con un riesgo moderado a alto.'),
+('Cuenta para Crédito Hipotecario', 'Cuenta utilizada para gestionar préstamos hipotecarios, desde el pago de cuotas mensuales hasta la solicitud de nuevos créditos para adquisición de vivienda.'),
+('Cuenta de Crédito Personal', 'Cuenta destinada para otorgar créditos personales a los clientes con la posibilidad de acceder a líneas de crédito de consumo y préstamos personales.'),
+('Cuenta Nómina', 'Cuenta destinada a recibir depósitos periódicos, generalmente utilizada por empleadores para el pago de salarios.'),
+('Cuenta de Pensión', 'Cuenta destinada a recibir los pagos de pensión por jubilación o pensión alimenticia, que permite la gestión de estos fondos de manera segura.');
+
+CREATE TABLE ESTADOS(
+	ESTADO_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    ESTADO VARCHAR(50)
+);
+INSERT INTO ESTADOS(ESTADO) VALUES("Activo"),("Cancelada"),("Bloqueada");
+
+
+-- tercer paso 
+
+-- Crear la tabla CUENTAS, asegurando que NO_CUENTA sea único
+CREATE TABLE CUENTAS(
+    NO_CUENTA VARCHAR(50) PRIMARY KEY,   -- Definir NO_CUENTA como clave primaria
+    FECHA_APERTURA VARCHAR(50),
+    SALDO DECIMAL(10, 2),
+    ESTADO VARCHAR(10),
+    ID_USUARIO INT,
+    ID_TIPO_CUENTA INT,
+    ID_ESTADO INT,
+    FOREIGN KEY (ID_TIPO_CUENTA) REFERENCES TIPO_CUENTA(TIPO_CUENTA_ID),
+    FOREIGN KEY (ID_ESTADO) REFERENCES ESTADOS(ESTADO_ID),
+    FOREIGN KEY (ID_USUARIO) REFERENCES USUARIO(USUARIO_ID)
+);
+
+--  tercer Insertar una cuenta en la tabla CUENTAS
+INSERT INTO CUENTAS (NO_CUENTA, FECHA_APERTURA, SALDO, ESTADO, ID_USUARIO, ID_TIPO_CUENTA, ID_ESTADO) 
+VALUES 
+('1234567890', '2024-11-01', 1000.00, 'Activo', 1, 1, 1);  -- ID_USUARIO 1 (Juan Pérez), Cuenta Corriente (ID_TIPO_CUENTA = 1), Estado Activo (ID_ESTADO = 1)
+
+
+
+
+
+CREATE TABLE USUARIOS_CUENTAS(
+  USUARIO_ID INT,
+  NO_CUENTA VARCHAR(50),
+  PRIMARY KEY (USUARIO_ID, NO_CUENTA),
+  FOREIGN KEY (USUARIO_ID) REFERENCES USUARIO(USUARIO_ID),
+  FOREIGN KEY (NO_CUENTA) REFERENCES CUENTAS(NO_CUENTA)
+);
+
+-- Asociar la cuenta al usuario en la tabla intermedia USUARIOS_CUENTAS
+INSERT INTO USUARIOS_CUENTAS (USUARIO_ID, NO_CUENTA)
+VALUES 
+(1, '1234567890');  -- Usuario con ID 1, Cuenta con NO_CUENTA '1234567890'
+
+
+-- Consultar todas las cuentas asociadas al usuario con ID 1
+SELECT 
+    U.NOMBRES, 
+    U.APELLIDOS, 
+    C.NO_CUENTA, 
+    C.FECHA_APERTURA, 
+    C.SALDO, 
+    C.ESTADO,
+    TC.TIPO_CUENTA   -- Agregamos el tipo de cuenta
+FROM 
+    USUARIO U
+JOIN 
+    USUARIOS_CUENTAS UC ON U.USUARIO_ID = UC.USUARIO_ID
+JOIN 
+    CUENTAS C ON UC.NO_CUENTA = C.NO_CUENTA
+JOIN 
+    TIPO_CUENTA TC ON C.ID_TIPO_CUENTA = TC.TIPO_CUENTA_ID  -- Agregamos el JOIN con la tabla TIPO_CUENTA
+WHERE 
+    U.USUARIO_ID = 1;  -- Mostrar todas las cuentas del usuario con ID 1 (Juan Pérez)
+
+
+
+
+
+
+-- 	TARJETAS BANCARIAS 
+CREATE TABLE TARJETA_CREDITO (
+    TARJETA_CREDITO_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    NUMERO_TARJETA VARCHAR(16) NOT NULL,
+    TITULAR_TARJETA VARCHAR(100),
+    LIMITE_CREDITO DECIMAL(10, 2),
+    TASA_INTERES DECIMAL(5, 2),
+    FECHA_VENCIMIENTO DATE,
+    ESTADO VARCHAR(20),  -- Puede ser 'Activo', 'Bloqueada', 'Cancelada', etc.
+    FECHA_EMISION DATE,
+    TIPO_TARJETA_ID INT,  -- Para vincularla a un tipo de tarjeta
+    FOREIGN KEY (TIPO_TARJETA_ID) REFERENCES TIPO_TARJETA(TIPO_TARJETA_ID),  -- Relaciona con la tabla TIPO_TARJETA
+    ID_USUARIO INT,  -- Relaciona la tarjeta con un usuario
+	FOREIGN KEY (ID_USUARIO) REFERENCES USUARIO(USUARIO_ID)  -- Relaciona con la tabla USUARIO
+);
+-- Insertar una tarjeta de crédito para el usuario 1
+INSERT INTO TARJETA_CREDITO (NUMERO_TARJETA, TITULAR_TARJETA, LIMITE_CREDITO, TASA_INTERES, FECHA_VENCIMIENTO, ESTADO, FECHA_EMISION, TIPO_TARJETA_ID, ID_USUARIO) 
+VALUES 
+('4111111111111111', 'Jorge ubico', 5000.00, 18.5, '2026-12-31', 'Activo', '2024-11-05', 1, 1),
+('4111111111111111', 'Jorge ubico', 5000.00, 18.5, '2026-12-31', 'Activo', '2024-11-05', 2, 1),
+('4111111111111111', 'Jorge ubico', 5000.00, 18.5, '2026-12-31', 'Activo', '2024-11-05', 3, 1);  -- ID_USUARIO 1, TIPO_TARJETA_ID 1 (Visa)
+
+CREATE TABLE TIPO_TARJETA (
+    TIPO_TARJETA_ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    NOMBRE_TARJETA VARCHAR(50),  -- Ejemplo: "Visa", "MasterCard", "American Express", etc.
+    DESCRIPCION VARCHAR(255)     -- Descripción breve del tipo de tarjeta
+);
+-- Insertar tipos de tarjeta
+INSERT INTO TIPO_TARJETA (NOMBRE_TARJETA, DESCRIPCION) VALUES
+('Visa', 'Tarjeta de crédito internacional aceptada globalmente.'),
+('MasterCard', 'Tarjeta de crédito internacional utilizada en millones de comercios.'),
+('American Express', 'Tarjeta de crédito con beneficios exclusivos para viajeros.');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Consultar todas las tarjetas de un usuario (por ejemplo, usuario con ID 1)
+SELECT 
+    T.NUMERO_TARJETA, 
+    T.TITULAR_TARJETA, 
+    T.LIMITE_CREDITO, 
+    T.TASA_INTERES, 
+    T.FECHA_VENCIMIENTO, 
+    T.ESTADO, 
+    T.FECHA_EMISION, 
+    TT.NOMBRE_TARJETA AS TIPO_TARJETA
+FROM 
+    TARJETA_CREDITO T
+JOIN 
+    TIPO_TARJETA TT ON T.TIPO_TARJETA_ID = TT.TIPO_TARJETA_ID
+WHERE 
+    T.ID_USUARIO = 1;  -- Mostrar tarjetas para el usuario con ID 1
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    -- administracion de tokens 
+CREATE TABLE tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    status ENUM('active', 'revoked') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES USUARIO(USUARIO_ID)
+);
+
+select *from tokens;
+delete from tokens;
+
